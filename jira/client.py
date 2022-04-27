@@ -42,13 +42,12 @@ from typing import (
 from urllib.parse import parse_qs, quote, urlparse
 
 import requests
-from packaging.version import parse as parse_version
 from requests import Response
 from requests.auth import AuthBase
 from requests.structures import CaseInsensitiveDict
 from requests.utils import get_netrc_auth
 
-from jira import __version__
+
 from jira.exceptions import JIRAError
 from jira.resilientsession import ResilientSession, raise_on_error
 from jira.resources import (
@@ -575,7 +574,6 @@ class JIRA:
             self._version = (0, 0, 0)
 
         if self._options["check_update"] and not JIRA.checked_version:
-            self._check_update_()
             JIRA.checked_version = True
 
         self._fields_cache_value: Dict[str, str] = {}  # access via self._fields_cache
@@ -621,24 +619,6 @@ class JIRA:
             session_api_url="{server}{auth_url}".format(**self._options),
             auth=auth,
         )
-
-    def _check_update_(self):
-        """Check if the current version of the library is outdated."""
-        try:
-            data = requests.get(
-                "https://pypi.python.org/pypi/jira/json", timeout=2.001
-            ).json()
-
-            released_version = data["info"]["version"]
-            if parse_version(released_version) > parse_version(__version__):
-                warnings.warn(
-                    "You are running an outdated version of Jira Python %s. Current version is %s. Do not file any bugs against older versions."
-                    % (__version__, released_version)
-                )
-        except requests.RequestException:
-            pass
-        except Exception as e:
-            self.log.warning(e)
 
     def __del__(self):
         """Destructor for JIRA instance."""
